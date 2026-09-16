@@ -1,7 +1,10 @@
 using GolBet.Repositories.Data;
 using GolBet.Repositories.Implementations;
 using GolBet.Repositories.Interfaces;
+using GolBet.Services.Mapping;
 using Microsoft.EntityFrameworkCore;
+using GolBet.Services.Interfaces;    
+using GolBet.Services.Implementations; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,13 +12,19 @@ var builder = WebApplication.CreateBuilder(args);
 // 1. REGISTRO DE SERVICIOS (Dependency Injection)
 // ==========================================
 
-// Configuración de Entity Framework Core con SQL Server
+// Base de datos (Entity Framework Core con SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registro de Repositorios Genericos y Específicos
+// Repositorios (Genéricos y Específicos)
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+
+// Servicios de Negocio
+builder.Services.AddScoped<IMatchService, MatchService>();
+
+// AutoMapper (Escanea el ensamblado que contiene MappingProfile)
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Controladores con Vistas (MVC)
 builder.Services.AddControllersWithViews();
