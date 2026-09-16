@@ -1,4 +1,12 @@
+using GolBet.Repositories.Data; // 1. Importa el namespace de tu DbContext
+using Microsoft.EntityFrameworkCore; // 2. Importa Entity Framework Core
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+// 3. Registra el DbContext usando la cadena de conexión del appsettings.json
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
