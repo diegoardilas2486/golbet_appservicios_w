@@ -1,72 +1,107 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿
+<!DOCTYPE html>
+<html lang="es-CO">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] - GolBet.Web</title>
+
     <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/GolBet.Web.styles.css" asp-append-version="true" />
 </head>
+
 <body>
+    <!-- 1. BARRA DE NAVEGACIÓN -->
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-success border-bottom mb-3"> 
+        <nav class="navbar navbar-expand-lg navbar-dark bg-success border-bottom mb-3">
+            <div class="container">
 
-  <div class="container"> 
+                <a class="navbar-brand fw-bold"
+                   asp-controller="Home"
+                   asp-action="Index">
+                    ⚽ GolBet
+                </a>
 
-    <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index"> 
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbarMain"
+                        aria-controls="navbarMain"
+                        aria-expanded="false"
+                        aria-label="Alternar navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-      ⚽ GolBet 
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto">
 
-    </a> 
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Matches"
+                               asp-action="Index">
+                                Partidos
+                            </a>
+                        </li>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                        <!-- Nuevo enlace a Equipos -->
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Teams"
+                               asp-action="Index">
+                                Equipos
+                            </a>
+                        </li>
 
-            data-bs-target="#navbarMain"> 
+                    </ul>
 
-      <span class="navbar-toggler-icon"></span> 
+                    <!-- Aquí podrás agregar la sesión (Módulo 7) -->
+                </div>
 
-    </button> 
-
-    <div class="collapse navbar-collapse" id="navbarMain"> 
-
-      <ul class="navbar-nav me-auto"> 
-
-        <li class="nav-item"> 
-
-           <a class="nav-link" asp-controller="Matches" asp-action="Index">Partidos</a> 
-
-        </li> 
-
-      </ul> 
-
-      <!-- Aquí irá el enlace a Partidos (Módulo 3) y la sesión (Módulo 7) --> 
-
-    </div> 
-
-  </div> 
-
-</nav> 
+            </div>
+        </nav>
     </header>
+
+    <!-- 2. CONTENIDO PRINCIPAL -->
     <div class="container">
         <main role="main" class="pb-3">
+
+            <!-- Mensaje de éxito -->
+            @if (TempData["Success"] is string message)
+            {
+                <div class="alert alert-success alert-dismissible fade show"
+                     role="alert">
+                    ✅ @message
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Cerrar">
+                    </button>
+                </div>
+            }
+
+            <!-- Contenido de cada vista -->
             @RenderBody()
+
         </main>
     </div>
 
-    <footer class="border-top footer text-muted"> 
+    <!-- 3. PIE DE PÁGINA -->
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; @DateTime.Now.Year - GolBet · Simulador académico
+        </div>
+    </footer>
 
-    <div class="container"> 
-
-        &copy; @DateTime.Now.Year - GolBet · Simulador académico 
-
-    </div> 
-
-</footer> 
+    <!-- 4. SCRIPTS -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

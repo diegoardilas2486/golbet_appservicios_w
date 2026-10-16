@@ -1,20 +1,36 @@
+
+using System.Globalization;
+
 using GolBet.Repositories.Data;
 using GolBet.Repositories.Implementations;
 using GolBet.Repositories.Interfaces;
 using GolBet.Services.Mapping;
+using GolBet.Services.Interfaces;
+using GolBet.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
-using GolBet.Services.Interfaces;    
-using GolBet.Services.Implementations; 
 
+// ==========================================
+// 1. CONFIGURACIÓN DE CULTURA (Colombia)
+// ==========================================
+var culture = new CultureInfo("es-CO");
+
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+// ==========================================
+// 2. CREACIÓN DEL BUILDER
+// ==========================================
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================================
-// 1. REGISTRO DE SERVICIOS (Dependency Injection)
+// 3. REGISTRO DE SERVICIOS (Dependency Injection)
 // ==========================================
 
 // Base de datos (Entity Framework Core con SQL Server)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    ));
 
 // Repositorios (Genéricos y Específicos)
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -23,21 +39,19 @@ builder.Services.AddScoped<IMatchRepository, MatchRepository>();
 // Servicios de Negocio
 builder.Services.AddScoped<IMatchService, MatchService>();
 
-// AutoMapper (Escanea el ensamblado que contiene MappingProfile)
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Controladores con Vistas (MVC)
 builder.Services.AddControllersWithViews();
 
-
 // ==========================================
-// 2. CONSTRUCCIÓN DE LA APLICACIÓN
+// 4. CONSTRUCCIÓN DE LA APLICACIÓN
 // ==========================================
 var app = builder.Build();
 
-
 // ==========================================
-// 3. SIEMBRA DE DATOS INICIALES (Data Seeding)
+// 5. SIEMBRA DE DATOS INICIALES (Data Seeding)
 // ==========================================
 using (var scope = app.Services.CreateScope())
 {
@@ -45,9 +59,8 @@ using (var scope = app.Services.CreateScope())
     await DbSeeder.SeedAsync(context);
 }
 
-
 // ==========================================
-// 4. PIPELINE DE PETICIONES HTTP (Middleware)
+// 6. PIPELINE DE PETICIONES HTTP (Middleware)
 // ==========================================
 if (!app.Environment.IsDevelopment())
 {
@@ -67,8 +80,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 // ==========================================
-// 5. INICIO DE LA APLICACIÓN
+// 7. INICIO DE LA APLICACIÓN
 // ==========================================
 app.Run();

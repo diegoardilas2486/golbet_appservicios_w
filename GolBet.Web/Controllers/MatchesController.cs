@@ -1,63 +1,170 @@
-// GolBet.Web/Controllers/MatchesController.cs 
 
-using GolBet.Entities.Enums; 
+using GolBet.Entities.Enums;
+using GolBet.Services.DTOs;
+using GolBet.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-using GolBet.Services.Interfaces; 
+namespace GolBet.Web.Controllers;
 
-using Microsoft.AspNetCore.Mvc; 
+public class MatchesController : Controller
+{
+    // ==========================================
+    // 1. DEPENDENCIAS
+    // ==========================================
 
-  
+    private readonly IMatchService _matchService;
+    private readonly ITeamService _teamService;
 
-namespace GolBet.Web.Controllers; 
+    public MatchesController(
+        IMatchService matchService,
+        ITeamService teamService)
+    {
+        _matchService = matchService;
+        _teamService = teamService;
+    }
 
-  
+    // ==========================================
+    // 2. CONSULTA DE PARTIDOS
+    // ==========================================
 
-public class MatchesController : Controller 
+    // GET /Matches
+    // GET /Matches?status=Scheduled
+    public async Task<IActionResult> Index(MatchStatus? status)
+    {
+        ViewBag.CurrentStatus = status;
 
-{ 
+        var board = await _matchService.GetBoardAsync(status);
 
-    private readonly IMatchService _matchService; 
+        return View(board);
+    }
 
-  
+    // GET /Matches/Detail/3
+    public async Task<IActionResult> Detail(int id)
+    {
+        var match = await _matchService.GetDetailAsync(id);
 
-    public MatchesController(IMatchService matchService) 
+        if (match is null)
+            return NotFound();
 
-        => _matchService = matchService; 
+        return View(match);
+    }
 
-  
+    // ==========================================
+    // 3. CREAR PARTIDO
+    // ==========================================
 
-    // GET /Matches            -> all matches 
+    // GET /Matches/Create
+    public async Task<IActionResult> Create()
+    {
+        await LoadTeamsAsync();
 
-    // GET /Matches?status=Scheduled -> filtered board 
+        return View(new MatchFormDto());
+    }
 
-    public async Task<IActionResult> Index(MatchStatus? status) 
+    // POST /Matches/Create
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(MatchFormDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadTeamsAsync();
+            return View(dto);
+        }
 
-    { 
+        try
+        {
+            await _matchService.CreateAsync(dto);
 
-        ViewBag.CurrentStatus = status; 
+            TempData["Success"] = "Partido creado correctamente.";
 
-        var board = await _matchService.GetBoardAsync(status); 
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
 
-        return View(board); 
+            await LoadTeamsAsync();
 
-    } 
+            return View(dto);
+        }
+    }
 
-  
+    // ==========================================
+    // 4. EDITAR PARTIDO
+    // ==========================================
 
-    // GET /Matches/Detail/3 
+    // GET /Matches/Edit/5
+    public async Task<IActionResult> Edit(int id)
+    {
+        var dto = await _matchService.GetForEditAsync(id);
 
-    public async Task<IActionResult> Detail(int id) 
+        if (dto is null)
+            return NotFound();
 
-    { 
+        await LoadTeamsAsync();
 
-        var match = await _matchService.GetDetailAsync(id); 
+        return View(dto);
+    }
 
-        if (match is null) return NotFound();   // HTTP 404 
+    // POST /Matches/Edit
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(MatchFormDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadTeamsAsync();
+            return View(dto);
+        }
 
-  
+        try
+        {
+            await _matchService.UpdateAsync(dto);
 
-        return View(match); 
+            TempData["Success"] = "Partido actualizado correctamente.";
 
-    } 
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
 
-} 
+            await LoadTeamsAsync();
+
+            return View(dto);
+        }
+    }
+
+    // ==========================================
+    // 5. DESACTIVAR PARTIDO
+    // ==========================================
+
+    // POST /Matches/Deactivate/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Deactivate(int id)
+    {
+        await _matchService.DeactivateAsync(id);
+
+        TempData["Success"] = "Partido desactivado.";
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ==========================================
+    // 6. MÉTODO AUXILIAR REUTILIZABLE
+    // ==========================================
+
+    private async Task LoadTeamsAsync()
+    {
+        var teams = await _teamService.GetAllAsync();
+
+        ViewBag.Teams = new SelectList(
+            teams,
+            "Id",
+            "Name"
+        );
+    }
+}
