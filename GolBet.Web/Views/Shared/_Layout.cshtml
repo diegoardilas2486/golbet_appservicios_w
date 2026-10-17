@@ -37,7 +37,16 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbarMain">
+
                     <ul class="navbar-nav me-auto">
+
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Inicio
+                            </a>
+                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link"
@@ -47,20 +56,23 @@
                             </a>
                         </li>
 
-                        <!-- Nuevo enlace a Equipos -->
-                        <li class="nav-item">
-                            <a class="nav-link"
-                               asp-controller="Teams"
-                               asp-action="Index">
-                                Equipos
-                            </a>
-                        </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link"
+                                   asp-controller="Teams"
+                                   asp-action="Index">
+                                    Equipos
+                                </a>
+                            </li>
+                        }
 
                     </ul>
 
-                    <!-- Aquí podrás agregar la sesión (Módulo 7) -->
-                </div>
+                    <!-- Opciones de inicio y cierre de sesión -->
+                    <partial name="_LoginPartial" />
 
+                </div>
             </div>
         </nav>
     </header>

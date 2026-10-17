@@ -6,7 +6,13 @@ using GolBet.Services.Interfaces;
 
 using Microsoft.AspNetCore.Mvc; 
 
+using Microsoft.AspNetCore.Authorization; 
+
+using GolBet.Repositories.Data;   // IdentitySeeder constants 
+
   
+
+[Authorize(Roles = DbSeeder.AdminRole)] 
 
 namespace GolBet.Web.Controllers; 
 

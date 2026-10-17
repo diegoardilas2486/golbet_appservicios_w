@@ -1,7 +1,9 @@
 
 using GolBet.Entities.Enums;
+using GolBet.Repositories.Data;
 using GolBet.Services.DTOs;
 using GolBet.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
@@ -25,11 +27,12 @@ public class MatchesController : Controller
     }
 
     // ==========================================
-    // 2. CONSULTA DE PARTIDOS
+    // 2. CONSULTA DE PARTIDOS: PÚBLICA
     // ==========================================
 
     // GET /Matches
     // GET /Matches?status=Scheduled
+    // Acceso público: cualquier visitante puede consultar la cartelera.
     public async Task<IActionResult> Index(MatchStatus? status)
     {
         ViewBag.CurrentStatus = status;
@@ -40,21 +43,25 @@ public class MatchesController : Controller
     }
 
     // GET /Matches/Detail/3
+    // Acceso público: cualquier visitante puede ver el detalle.
     public async Task<IActionResult> Detail(int id)
     {
         var match = await _matchService.GetDetailAsync(id);
 
         if (match is null)
+        {
             return NotFound();
+        }
 
         return View(match);
     }
 
     // ==========================================
-    // 3. CREAR PARTIDO
+    // 3. CREAR PARTIDO: SOLO ADMIN
     // ==========================================
 
     // GET /Matches/Create
+    [Authorize(Roles = DbSeeder.AdminRole)]
     public async Task<IActionResult> Create()
     {
         await LoadTeamsAsync();
@@ -65,6 +72,7 @@ public class MatchesController : Controller
     // POST /Matches/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = DbSeeder.AdminRole)]
     public async Task<IActionResult> Create(MatchFormDto dto)
     {
         if (!ModelState.IsValid)
@@ -92,16 +100,19 @@ public class MatchesController : Controller
     }
 
     // ==========================================
-    // 4. EDITAR PARTIDO
+    // 4. EDITAR PARTIDO: SOLO ADMIN
     // ==========================================
 
     // GET /Matches/Edit/5
+    [Authorize(Roles = DbSeeder.AdminRole)]
     public async Task<IActionResult> Edit(int id)
     {
         var dto = await _matchService.GetForEditAsync(id);
 
         if (dto is null)
+        {
             return NotFound();
+        }
 
         await LoadTeamsAsync();
 
@@ -111,6 +122,7 @@ public class MatchesController : Controller
     // POST /Matches/Edit
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = DbSeeder.AdminRole)]
     public async Task<IActionResult> Edit(MatchFormDto dto)
     {
         if (!ModelState.IsValid)
@@ -138,12 +150,13 @@ public class MatchesController : Controller
     }
 
     // ==========================================
-    // 5. DESACTIVAR PARTIDO
+    // 5. DESACTIVAR PARTIDO: SOLO ADMIN
     // ==========================================
 
     // POST /Matches/Deactivate/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = DbSeeder.AdminRole)]
     public async Task<IActionResult> Deactivate(int id)
     {
         await _matchService.DeactivateAsync(id);

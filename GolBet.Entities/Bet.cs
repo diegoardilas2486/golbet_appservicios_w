@@ -47,5 +47,8 @@ public class Bet : AuditableEntity
   
 
     // Module 7 will add:  public string UserId  +  AppUser User 
+    public string UserId { get; set; } = null!;   // FK -> AspNetUsers (string PK) 
+
+    public AppUser User { get; set; } = null!;    // navigation property 
 
 } 

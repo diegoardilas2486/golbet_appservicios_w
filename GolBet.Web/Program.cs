@@ -1,67 +1,83 @@
 
 using System.Globalization;
-
+using GolBet.Entities;
 using GolBet.Repositories.Data;
 using GolBet.Repositories.Implementations;
 using GolBet.Repositories.Interfaces;
-using GolBet.Services.Mapping;
-using GolBet.Services.Interfaces;
 using GolBet.Services.Implementations;
+using GolBet.Services.Interfaces;
+using GolBet.Services.Mapping;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-// ==========================================
-// 1. CONFIGURACIÓN DE CULTURA (Colombia)
-// ==========================================
+// Configuración regional para Colombia.
 var culture = new CultureInfo("es-CO");
-
 CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
-// ==========================================
-// 2. CREACIÓN DEL BUILDER
-// ==========================================
 var builder = WebApplication.CreateBuilder(args);
 
-// ==========================================
-// 3. REGISTRO DE SERVICIOS (Dependency Injection)
-// ==========================================
-
-// Base de datos (Entity Framework Core con SQL Server)
+// Conexión a SQL Server.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+    )
+);
 
-// Repositorios (Genéricos y Específicos)
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+// Configuración de ASP.NET Core Identity.
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireDigit = true;
+
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>();
+
+// Configuración de las cookies de autenticación.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+// Registro de repositorios y servicios.
+builder.Services.AddScoped(
+    typeof(IGenericRepository<>),
+    typeof(GenericRepository<>)
+);
+
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
-
-// Servicios de Negocio
 builder.Services.AddScoped<IMatchService, MatchService>();
 
-// AutoMapper
+// Configuración de AutoMapper.
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// Controladores con Vistas (MVC)
+// Configuración de MVC.
 builder.Services.AddControllersWithViews();
 
-// ==========================================
-// 4. CONSTRUCCIÓN DE LA APLICACIÓN
-// ==========================================
 var app = builder.Build();
 
-// ==========================================
-// 5. SIEMBRA DE DATOS INICIALES (Data Seeding)
-// ==========================================
+// Inicialización de datos: migraciones, equipos, partidos,
+// roles y usuario administrador.
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(context);
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<AppDbContext>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = services.GetRequiredService<UserManager<AppUser>>();
+
+    await DbSeeder.SeedAsync(
+        context,
+        roleManager,
+        userManager
+    );
 }
 
-// ==========================================
-// 6. PIPELINE DE PETICIONES HTTP (Middleware)
-// ==========================================
+// Configuración del entorno.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -69,18 +85,20 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseRouting();
 
+// La autenticación debe ejecutarse antes de la autorización.
+app.UseAuthentication();
 app.UseAuthorization();
 
+// Archivos estáticos.
 app.MapStaticAssets();
 
+// Ruta MVC predeterminada.
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+).WithStaticAssets();
 
-// ==========================================
-// 7. INICIO DE LA APLICACIÓN
-// ==========================================
 app.Run();
