@@ -17,7 +17,7 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Conexión a SQL Server.
+// Configuración de la conexión a SQL Server.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
@@ -34,7 +34,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 
     options.User.RequireUniqueEmail = true;
 })
-.AddEntityFrameworkStores<AppDbContext>();
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 
 // Configuración de las cookies de autenticación.
 builder.Services.ConfigureApplicationCookie(options =>
@@ -43,14 +44,20 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-// Registro de repositorios y servicios.
+// Registro de repositorios genéricos.
 builder.Services.AddScoped(
     typeof(IGenericRepository<>),
     typeof(GenericRepository<>)
 );
 
+// Registro de repositorios específicos.
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+
+// Registro de servicios de negocio.
 builder.Services.AddScoped<IMatchService, MatchService>();
+
+// CORRECCIÓN: registrar el servicio de equipos requerido por MatchesController.
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 // Configuración de AutoMapper.
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -60,8 +67,7 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Inicialización de datos: migraciones, equipos, partidos,
-// roles y usuario administrador.
+// Inicialización de la base de datos y datos iniciales.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

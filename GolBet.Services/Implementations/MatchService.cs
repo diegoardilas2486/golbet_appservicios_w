@@ -1,5 +1,4 @@
 // GolBet.Services/Implementations/MatchService.cs 
-
 using AutoMapper;
 using GolBet.Entities;
 using GolBet.Entities.Enums;
@@ -32,12 +31,18 @@ public class MatchService : IMatchService
     // ==========================================
 
     /// <summary>
-    /// Obtiene la cartelera de partidos y permite filtrar por estado.
+    /// Obtiene la cartelera de partidos activos.
+    /// Permite filtrar por estado y nombre del equipo.
+    /// La búsqueda se delega al repositorio.
     /// </summary>
     public async Task<IEnumerable<MatchDto>> GetBoardAsync(
-        MatchStatus? status = null)
+        MatchStatus? status = null,
+        string? search = null)
     {
-        var matches = await _matchRepository.GetAllWithTeamsAsync(status);
+        var matches = await _matchRepository.GetAllWithTeamsAsync(
+            status,
+            search
+        );
 
         return _mapper.Map<IEnumerable<MatchDto>>(matches);
     }
@@ -54,6 +59,10 @@ public class MatchService : IMatchService
             : _mapper.Map<MatchDetailDto>(match);
     }
 
+    // ==========================================
+    // 3. CONSULTA PARA EDICIÓN
+    // ==========================================
+
     /// <summary>
     /// Obtiene los datos de un partido para editarlo.
     /// Convierte la fecha UTC a la hora local de Colombia.
@@ -63,7 +72,9 @@ public class MatchService : IMatchService
         var match = await _matchRepository.GetByIdAsync(id);
 
         if (match is null)
+        {
             return null;
+        }
 
         var dto = _mapper.Map<MatchFormDto>(match);
 
@@ -73,7 +84,7 @@ public class MatchService : IMatchService
     }
 
     // ==========================================
-    // 3. CREACIÓN DE PARTIDOS
+    // 4. CREACIÓN DE PARTIDOS
     // ==========================================
 
     /// <summary>
@@ -92,7 +103,7 @@ public class MatchService : IMatchService
     }
 
     // ==========================================
-    // 4. ACTUALIZACIÓN DE PARTIDOS
+    // 5. ACTUALIZACIÓN DE PARTIDOS
     // ==========================================
 
     /// <summary>
@@ -104,7 +115,8 @@ public class MatchService : IMatchService
 
         var match = await _matchRepository.GetByIdAsync(dto.Id)
             ?? throw new KeyNotFoundException(
-                $"Match {dto.Id} not found.");
+                $"Match {dto.Id} not found."
+            );
 
         _mapper.Map(dto, match);
 
@@ -114,7 +126,7 @@ public class MatchService : IMatchService
     }
 
     // ==========================================
-    // 5. DESACTIVACIÓN DE PARTIDOS
+    // 6. DESACTIVACIÓN DE PARTIDOS
     // ==========================================
 
     /// <summary>
@@ -126,7 +138,7 @@ public class MatchService : IMatchService
     }
 
     // ==========================================
-    // 6. VALIDACIÓN DE REGLAS DE NEGOCIO
+    // 7. VALIDACIÓN DE REGLAS DE NEGOCIO
     // ==========================================
 
     /// <summary>
@@ -138,13 +150,15 @@ public class MatchService : IMatchService
         if (dto.HomeTeamId == dto.AwayTeamId)
         {
             throw new InvalidOperationException(
-                "El equipo local y el visitante no pueden ser el mismo.");
+                "El equipo local y el visitante no pueden ser el mismo."
+            );
         }
 
         if (dto.Date.ToUtcFromColombia() <= DateTime.UtcNow)
         {
             throw new InvalidOperationException(
-                "La fecha del partido debe ser futura.");
+                "La fecha del partido debe ser futura."
+            );
         }
     }
 }

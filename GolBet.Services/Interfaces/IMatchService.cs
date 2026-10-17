@@ -1,3 +1,4 @@
+//GolBet.Services/Implementations/MatchService.cs
 
 using GolBet.Entities.Enums;
 using GolBet.Services.DTOs;
@@ -15,7 +16,8 @@ public interface IMatchService
     /// Permite filtrar opcionalmente por estado.
     /// </summary>
     Task<IEnumerable<MatchDto>> GetBoardAsync(
-        MatchStatus? status = null
+        MatchStatus? status = null,
+        string? search = null
     );
 
     /// <summary>

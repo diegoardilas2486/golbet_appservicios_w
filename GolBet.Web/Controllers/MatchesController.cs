@@ -1,4 +1,4 @@
-
+//GolBet.Web/Controllers/MatchesController.cs
 using GolBet.Entities.Enums;
 using GolBet.Repositories.Data;
 using GolBet.Services.DTOs;
@@ -32,18 +32,24 @@ public class MatchesController : Controller
 
     // GET /Matches
     // GET /Matches?status=Scheduled
-    // Acceso público: cualquier visitante puede consultar la cartelera.
-    public async Task<IActionResult> Index(MatchStatus? status)
+    // GET /Matches?search=nacional
+    // GET /Matches?status=Scheduled&search=nacional
+    public async Task<IActionResult> Index(
+        MatchStatus? status,
+        string? search)
     {
         ViewBag.CurrentStatus = status;
+        ViewBag.CurrentSearch = search ?? string.Empty;
 
-        var board = await _matchService.GetBoardAsync(status);
+        var board = await _matchService.GetBoardAsync(
+            status,
+            search
+        );
 
         return View(board);
     }
 
     // GET /Matches/Detail/3
-    // Acceso público: cualquier visitante puede ver el detalle.
     public async Task<IActionResult> Detail(int id)
     {
         var match = await _matchService.GetDetailAsync(id);
@@ -78,6 +84,7 @@ public class MatchesController : Controller
         if (!ModelState.IsValid)
         {
             await LoadTeamsAsync();
+
             return View(dto);
         }
 
@@ -128,6 +135,7 @@ public class MatchesController : Controller
         if (!ModelState.IsValid)
         {
             await LoadTeamsAsync();
+
             return View(dto);
         }
 

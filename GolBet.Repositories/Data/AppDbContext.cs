@@ -97,3 +97,4 @@ public class AppDbContext : IdentityDbContext<AppUser>
         return base.SaveChangesAsync(cancellationToken);
     }
 }
+
