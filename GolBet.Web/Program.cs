@@ -52,9 +52,11 @@ builder.Services.AddScoped(
 
 // Registro de repositorios específicos.
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+builder.Services.AddScoped<IBetRepository, BetRepository>();
 
 // Registro de servicios de negocio.
 builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddScoped<IBetService, BetService>();
 
 // CORRECCIÓN: registrar el servicio de equipos requerido por MatchesController.
 builder.Services.AddScoped<ITeamService, TeamService>();
