@@ -9,6 +9,7 @@ using GolBet.Services.Interfaces;
 using GolBet.Services.Mapping;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 // Configuración regional para Colombia.
 var culture = new CultureInfo("es-CO");
@@ -16,6 +17,8 @@ CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 // Configuración de la conexión a SQL Server.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -88,12 +91,14 @@ using (var scope = app.Services.CreateScope())
 // Configuración del entorno.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error/General");
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
+app.UseSerilogRequestLogging();
 app.UseRouting();
 
 // La autenticación debe ejecutarse antes de la autorización.
